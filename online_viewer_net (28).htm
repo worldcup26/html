@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MVP Haxball</title>
+  <!-- Tailwind CSS CDN for modern styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Ensure Inter font is used */
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom styles for the iframe to ensure it fills its container */
+    .responsive-iframe-container {
+      position: relative;
+      width: 100%;
+      padding-bottom: 75%; /* 4:3 Aspect Ratio (change this to 56.25% for 16:9) */
+      height: 0;
+      overflow: hidden;
+    }
+    .responsive-iframe-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+
+  <!-- Main container for the calculator and the iframe -->
+  <!-- Changed to always be flex-col for vertical stacking and items-stretch for full width -->
+  <div class="flex flex-col items-stretch justify-center w-full max-w-5xl space-y-6">
+
+    <!-- Calculator Section -->
+    <!-- Removed md:w-1/2 to make it always full width -->
+    <div class="bg-gray-800 p-8 rounded-lg shadow-lg w-full border border-gray-700">
+      <h1 class="text-4xl font-extrabold text-center text-white mb-6">
+        MVP Haxball
+      </h1>
+
+      <section class="mb-8">
+        <h2 class="text-2xl font-bold text-center text-gray-100 mb-6">Estadísticas del Jugador</h2>
+
+        <!-- Goles Input -->
+        <div class="mb-4">
+          <label for="goles" class="block text-gray-300 text-sm font-semibold mb-2">Goles:</label>
+          <input
+            type="number"
+            id="goles"
+            min="0"
+            value="0"
+            class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200 ease-in-out"
+            placeholder="Número de goles"
+          />
+        </div>
+
+        <!-- Asistencias Input -->
+        <div class="mb-4">
+          <label for="asistencias" class="block text-gray-300 text-sm font-semibold mb-2">Asistencias:</label>
+          <input
+            type="number"
+            id="asistencias"
+            min="0"
+            value="0"
+            class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200 ease-in-out"
+            placeholder="Número de asistencias"
+          />
+        </div>
+
+        <!-- Resultado Select -->
+        <div class="mb-4">
+          <label for="resultado" class="block text-gray-300 text-sm font-semibold mb-2">Resultado del equipo:</label>
+          <select
+            id="resultado"
+            class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200 ease-in-out appearance-none pr-8"
+          >
+            <option value="victoria">Ganó</option>
+            <option value="empate">Empató</option>
+            <option value="derrota">Perdió</option>
+          </select>
+        </div>
+
+        <!-- Diferencia de goles Input (conditionally hidden/shown by JS) -->
+        <div id="diferencia-container" class="mb-6 hidden">
+          <label for="diferencia" class="block text-gray-300 text-sm font-semibold mb-2">Diferencia de goles (solo si ganó):</label>
+          <input
+            type="number"
+            id="diferencia"
+            min="0"
+            value="0"
+            class="w-full px-4 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200 ease-in-out"
+            placeholder="Diferencia de goles"
+          />
+        </div>
+
+        <!-- Calcular MVP Button -->
+        <button
+          onclick="calcularMVP()"
+          id="calculate-button"
+          class="w-full bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-500 transition duration-300 ease-in-out transform hover:scale-105"
+        >
+          Calcular MVP
+        </button>
+      </section>
+
+      <!-- MVP Results Section -->
+      <section id="results-section" class="mt-8 pt-6 border-t border-gray-700 hidden">
+        <h2 class="text-2xl font-bold text-center text-gray-100 mb-4">Resultado del MVP</h2>
+        <p id="resultadoMVP" class="text-3xl font-extrabold text-center text-green-400 mb-2"></p>
+        <div id="evaluacion" class="text-xl font-semibold text-center text-yellow-400 mb-6"></div>
+      </section>
+    </div>
+
+    <!-- Iframe Section -->
+    <!-- Removed md:w-1/2 to make it always full width -->
+    <div class="bg-gray-800 p-4 rounded-lg shadow-lg w-full border border-gray-700 flex flex-col items-center justify-center">
+      <h2 class="text-2xl font-bold text-center text-gray-100 mb-4">Resultados de Copa Fácil</h2>
+      <div class="responsive-iframe-container w-full">
+        <iframe src="https://copafacil.com/-nl9ec" title="Copa Fácil Resultados"></iframe>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Get DOM elements
+    const golesInput = document.getElementById("goles");
+    const asistenciasInput = document.getElementById("asistencias");
+    const resultadoSelect = document.getElementById("resultado");
+    const diferenciaInput = document.getElementById("diferencia");
+    const diferenciaContainer = document.getElementById("diferencia-container");
+    const resultadoMVPElement = document.getElementById("resultadoMVP");
+    const evaluacionElement = document.getElementById("evaluacion");
+    const calculateButton = document.getElementById("calculate-button");
+    const resultsSection = document.getElementById("results-section");
+
+    // Event listener to show/hide diferencia input based on result
+    resultadoSelect.addEventListener('change', (event) => {
+      if (event.target.value === 'victoria') {
+        diferenciaContainer.classList.remove('hidden');
+      } else {
+        diferenciaContainer.classList.add('hidden');
+        diferenciaInput.value = 0; // Reset difference if not a win
+      }
+    });
+
+    /**
+     * Calculates the MVP score based on player statistics and team result.
+     * This logic is directly translated from the original JavaScript.
+     */
+    function calcularMVP() {
+      // Hide previous results
+      resultsSection.classList.add('hidden');
+
+      // Disable button during calculation
+      calculateButton.disabled = true;
+      calculateButton.textContent = 'Calculando MVP...';
+
+      // Parse input values, defaulting to 0 if empty or invalid
+      const goles = parseFloat(golesInput.value) || 0;
+      const asistencias = parseFloat(asistenciasInput.value) || 0;
+      const resultado = resultadoSelect.value;
+      let diferencia = parseFloat(diferenciaInput.value) || 0;
+
+      let R = 0; // Result multiplier
+      if (resultado === "victoria") {
+        R = 0.6;
+        if (diferencia > 5) diferencia = 5; // Cap difference at 5 for calculation
+      } else if (resultado === "empate") {
+        R = 0.5;
+        diferencia = 0; // No difference for draws
+      } else { // derrota
+        R = 0.3;
+        diferencia = 0; // No difference for losses
+      }
+
+      // Calculate the "bruto" (gross) MVP score
+      let bruto = 6.0 + (0.85 * goles) + (0.5 * asistencias) + R + (0.05 * diferencia);
+      let mvp = bruto; // Initialize MVP with bruto score
+
+      // Apply specific adjustments based on team result
+      if (resultado === "victoria") {
+        if (bruto >= 8.4) {
+          mvp = 8.4 + (bruto - 8.4) * 0.4; // Apply a diminishing return for high scores in wins
+        }
+        if (mvp > 10) mvp = 10; // Cap MVP at 10
+      } else { // empate or derrota
+        if (bruto >= 7.95) {
+          mvp = 7.95 + (bruto - 7.95) * 0.35; // Apply a diminishing return for high scores in draws/losses
+        }
+        if (mvp > 9.5) mvp = 9.5; // Cap MVP at 9.5 for draws/losses
+      }
+
+      // NEW CONDITION: MVP can only reach 10 if specific conditions are met
+      const puedeLlegarA10 =
+        goles >= 5 || asistencias >= 4 || (resultado === "victoria" && diferencia >= 6);
+
+      if (mvp > 9.9 && !puedeLlegarA10) {
+        mvp = 9.9; // Cap MVP at 9.9 if conditions for 10 are not met
+      }
+
+      if (mvp < 6.5) mvp = 6.5; // Minimum MVP score is 6.5
+
+      // Format the MVP result to two decimal places
+      const finalMvp = mvp.toFixed(2);
+      resultadoMVPElement.textContent = `MVP: ${finalMvp} / 10`;
+
+      // Determine the evaluation tag based on the final MVP score
+      let etiqueta = "";
+      if (mvp >= 9.5) etiqueta = "🔥 Crack total";
+      else if (mvp >= 9.0) etiqueta = "💎 Figura del partido";
+      else if (mvp >= 8.0) etiqueta = "✅ Muy buen rendimiento";
+      else if (mvp >= 7.0) etiqueta = "👍 Buen aporte";
+      else etiqueta = "⚠️ Rendimiento discreto";
+      evaluacionElement.textContent = etiqueta;
+
+      // Show the results section
+      resultsSection.classList.remove('hidden');
+
+      // Re-enable button after all operations are complete
+      calculateButton.disabled = false;
+      calculateButton.textContent = 'Calcular MVP';
+    }
+
+    // Initial state setup for "diferencia" input on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      if (resultadoSelect.value === 'victoria') {
+        diferenciaContainer.classList.remove('hidden');
+      } else {
+        diferenciaContainer.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
